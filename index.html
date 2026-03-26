@@ -184,14 +184,6 @@
       border-radius: 999px;
       padding: 10px 16px;
       cursor: pointer;
-      font-weight:
-    .download-btn {
-      background: white;
-      color: black;
-      border: none;
-      border-radius: 999px;
-      padding: 10px 16px;
-      cursor: pointer;
       font-weight: 700;
       text-decoration: none;
       display: inline-flex;
@@ -230,7 +222,10 @@
   </main>
 
   <div id="modal" class="modal">
-    <div class="modal-conte        <p id="modalTitle" class="modal-title"></p>
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <p id="modalTitle" class="modal-title"></p>
           <p id="modalPath" class="modal-path"></p>
         </div>
         <div class="modal-actions">
@@ -260,7 +255,8 @@
     const statusBox = document.getElementById('status');
     const gallery = document.getElementById('gallery');
     const modal = document.getElementById('modal');
-    const modalImage = document.getElementById('modalImage');lTitle');
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('modalTitle');
     const modalPath = document.getElementById('modalPath');
     const closeBtn = document.getElementById('closeBtn');
     const downloadBtn = document.getElementById('downloadBtn');
@@ -272,41 +268,42 @@
     }
 
     function getRawUrl(filePath) {
-      return `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
+      return `https://cdn.jsdelivr.net/gh/${CONFIG.owner}/${CONFIG.repo}@${CONFIG.branch}/${filePath}`;
+    }
+
+    function getTreeUrl() {
+      return `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/git/trees/${CONFIG.branch}?recursive=1`;
+    }/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
     }
 
     function getApiUrl(path = '') {
       const cleanPath = path ? `/${path}` : '';
       return `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents${cleanPath}?ref=${CONFIG.branch}`;
+    }` : '';
+      return `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents${cleanPath}?ref=${CONFIG.branch}`;
     }
 
-    async function fetchRepoImages(path = '') {
-      const response = await fetch(getApiUrl(path));
+    async function fetchRepoImages() {
+      const response = await fetch(getTreeUrl(), {
+        headers: {
+          'Accept': 'application/vnd.github+json'
+        }
+      });
 
       if (!response.ok) {
-        throw new Error('Could not read this GitHub repo. Check username, repo, branch, and make sure the repo is public.');
+        throw new Error('Could not load the repo image list. GitHub may be rate-limiting the requests, or the repo/branch may be wrong.');
       }
 
-      const items = await response.json();
-      const list = Array.isArray(items) ? items : [items];
-      let found = [];
+      const data = await response.json();
+      const tree = Array.isArray(data.tree) ? data.tree : [];
 
-      for (const item of list) {
-        if (item.type === 'file' && isImageFile(item.name)) {
-          found.push({
-            name: item.name,
-            path: item.path,
-            url: getRawUrl(item.path)
-          });
-        }
-
-        if (item.type === 'dir') {
-          const nested = await fetchRepoImages(item.path);
-          found = found.concat(nested);
-        }
-      }
-
-      return found;
+      return tree
+        .filter(item => item.type === 'blob' && isImageFile(item.path))
+        .map(item => ({
+          name: item.path.split('/').pop(),
+          path: item.path,
+          url: getRawUrl(item.path)
+        }));
     }
 
     function setHero(image) {
@@ -317,15 +314,28 @@
       }
 
       heroContent.className = '';
-      heroContent.innerHTML = `<img id="heroImage" src="${image.url}" alt="${image.name}">`;
+      heroContent.innerHTML = `<img id="heroImage" src="${image.url}" alt="${image.name}" loading="eager" decoding="async">`;
     }
 
     function createCard(image) {
       const card = document.createElement('div');
-      card.className = 'image-cal}" alt="${image.name}" loading="lazy">
+      card.className = 'image-card';
+      const isGif = image.name.toLowerCase().endsWith('.gif');
+      card.innerHTML = `
+        <img src="${image.url}" alt="${image.name}" loading="lazy">
         <div class="card-overlay">
           <p class="card-title">${image.name}</p>
-          <p class="card-subtitle">${isGif ? 'GIF found •image.name;
+          <p class="card-subtitle">${isGif ? 'GIF found • click to view or download' : 'Click to view or download'}</p>
+        </div>
+      `;
+      card.addEventListener('click', () => openModal(image));
+      return card;
+    }
+
+    function openModal(image) {
+      modalImage.src = image.url;
+      modalImage.alt = image.name;
+      modalTitle.textContent = image.name;
       modalPath.textContent = image.path;
       downloadBtn.href = image.url;
       downloadBtn.setAttribute('download', image.name);
@@ -362,9 +372,9 @@
     async function loadImages() {
       try {
         statusBox.className = 'status';
-        statusBox.textContent = 'Checking your GitHub repo for image files...';
+        statusBox.textContent = 'Loading images from your GitHub repo...';
 
-        const images = await fetchRepoImages(CONFIG.path);
+        const images = await fetchRepoImages();
 
         images.sort((a, b) => {
           if (a.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) return -1;
