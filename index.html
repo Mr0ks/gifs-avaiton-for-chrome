@@ -8,151 +8,383 @@
 
   <style>
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: black;
-      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #000;
+      color: #fff;
     }
 
     .hero {
       position: relative;
       height: 100vh;
+      width: 100%;
       overflow: hidden;
+      background: #000;
     }
 
     #heroContent {
       position: absolute;
       inset: 0;
+      overflow: hidden;
     }
 
     .hero img {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 120%;
       object-fit: cover;
+      display: block;
+      transform: translateY(0px);
+      will-change: transform;
+    }
+
+    .hero-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.75);
+      font-size: 20px;
+    }
+
+    .hero-gradient {
       position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 260px;
+      background: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.72), rgba(0,0,0,0));
+      pointer-events: none;
+      z-index: 2;
     }
 
     .hero-text {
       position: fixed;
-      top: 20px;
+      top: 22px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 40px;
-      font-weight: bold;
-      z-index: 10;
+      z-index: 20;
+      text-align: center;
+      padding: 0 16px;
+      pointer-events: none;
+      width: 100%;
+      max-width: 900px;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.45);
+    }
+
+    .hero-text h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 56px);
+      font-weight: 700;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+
+    .status {
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
     }
 
     .gallery {
-      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 28px;
+    }
+
+    .image-card {
+      position: relative;
+      display: block;
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 28px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .image-card:hover {
+      transform: scale(1.01);
+      border-color: rgba(255,255,255,0.25);
     }
 
     .image-card img {
       width: 100%;
-      border-radius: 20px;
-      cursor: pointer;
+      display: block;
+      background: #111;
+    }
+
+    .card-overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 18px;
+      background: linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0));
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      margin: 0;
     }
 
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.92);
       display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 1200px;
+      max-height: 95vh;
+      overflow: hidden;
+      border-radius: 28px;
+      background: #0a0a0a;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .modal-path {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: rgba(255,255,255,0.65);
+      word-break: break-all;
+    }
+
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .close-btn {
+      background: transparent;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+
+    .download-btn {
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
     }
 
-    .modal.open { display: flex; }
-
-    .modal img {
-      max-width: 90%;
-      max-height: 90%;
+    .modal-body {
+      max-height: calc(95vh - 74px);
+      overflow: auto;
+      background: #000;
     }
 
-    .download-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: white;
-      color: black;
-      padding: 10px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: bold;
+    .modal-body img {
+      width: 100%;
+      display: block;
     }
   </style>
 </head>
 <body>
+  <section class="hero">
+    <div id="heroContent" class="hero-placeholder">Loading images...</div>
+    <div class="hero-gradient"></div>
+    <div class="hero-text" id="heroText">
+      <h1>Aviation Gifs</h1>
+    </div>
+  </section>
 
-  <div class="hero">
-    <div id="heroContent">Loading...</div>
-    <div class="hero-text">Aviation Gifs</div>
+  <main class="container">
+    <div id="status" class="status">Loading images...</div>
+    <div id="gallery" class="gallery"></div>
+  </main>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <p id="modalTitle" class="modal-title"></p>
+          <p id="modalPath" class="modal-path"></p>
+        </div>
+        <div class="modal-actions">
+          <a id="downloadBtn" class="download-btn" href="#" download>Download</a>
+          <button id="closeBtn" class="close-btn">Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <img id="modalImage" src="" alt="" />
+      </div>
+    </div>
   </div>
 
-  <div class="gallery" id="gallery"></div>
+  <script>
+    const FILES = [
+      'dubai.png',
+      'a320neo takeoff.gif',
+      '777x.gif'
+    ];
 
-  <div class="modal" id="modal">
-    <a id="downloadBtn" class="download-btn" download>Download</a>
-    <img id="modalImage">
-  </div>
+    const FEATURED_IMAGE = 'dubai.png';
 
-<script>
+    const heroContent = document.getElementById('heroContent');
+    const statusBox = document.getElementById('status');
+    const gallery = document.getElementById('gallery');
+    const modal = document.getElementById('modal');
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalPath = document.getElementById('modalPath');
+    const closeBtn = document.getElementById('closeBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const heroText = document.getElementById('heroText');
 
-const FILES = [
-  'dubai.png',
-  'a320neo takeoff.gif',
-  '777x.gif'
-];
+    function toImageObject(path) {
+      const cleanPath = String(path || '').trim();
+      return {
+        name: cleanPath.split('/').pop(),
+        path: cleanPath,
+        url: encodeURI(cleanPath)
+      };
+    }
 
-const heroContent = document.getElementById('heroContent');
-const gallery = document.getElementById('gallery');
-const modal = document.getElementById('modal');
-const modalImage = document.getElementById('modalImage');
-const downloadBtn = document.getElementById('downloadBtn');
+    function setHero(image) {
+      if (!image) {
+        heroContent.className = 'hero-placeholder';
+        heroContent.textContent = 'No images found.';
+        return;
+      }
 
-function setHero(src) {
-  heroContent.innerHTML = `<img id="heroImage" src="${src}">`;
-}
+      heroContent.className = '';
+      heroContent.innerHTML = `<img id="heroImage" src="${image.url}" alt="${image.name}" loading="eager">`;
+    }
 
-function createImage(src) {
-  const div = document.createElement('div');
-  div.className = 'image-card';
-  div.innerHTML = `<img src="${src}">`;
+    function createCard(image) {
+      const card = document.createElement('div');
+      const isGif = image.name.toLowerCase().endsWith('.gif');
+      card.className = 'image-card';
+      card.innerHTML = `
+        <img src="${image.url}" alt="${image.name}" loading="lazy">
+        <div class="card-overlay">
+          <p class="card-title">${image.name}</p>
+          <p class="card-subtitle">${isGif ? 'GIF found • click to view or download' : 'Click to view or download'}</p>
+        </div>
+      `;
+      card.addEventListener('click', () => openModal(image));
+      return card;
+    }
 
-  div.onclick = () => {
-    modal.classList.add('open');
-    modalImage.src = src;
-    downloadBtn.href = src;
-  };
+    function openModal(image) {
+      modalImage.src = image.url;
+      modalImage.alt = image.name;
+      modalTitle.textContent = image.name;
+      modalPath.textContent = image.path;
+      downloadBtn.href = image.url;
+      downloadBtn.setAttribute('download', image.name);
+      modal.classList.add('open');
+    }
 
-  return div;
-}
+    function closeModal() {
+      modal.classList.remove('open');
+    }
 
-modal.onclick = () => modal.classList.remove('open');
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
 
-function load() {
-  if (!FILES.length) return;
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const heroImage = document.getElementById('heroImage');
+      if (heroImage) {
+        heroImage.style.transform = `translateY(${scrollY * 0.35}px)`;
+      }
 
-  setHero(FILES[0]);
+      const moveDown = Math.min(scrollY * 0.18, 90);
+      const scale = Math.max(1 - scrollY * 0.00035, 0.88);
+      heroText.style.transform = `translateX(-50%) translateY(${moveDown}px) scale(${scale})`;
+      heroText.style.opacity = `${Math.max(1 - scrollY * 0.0012, 0.5)}`;
+    });
 
-  FILES.forEach(file => {
-    gallery.appendChild(createImage(file));
-  });
-}
+    function loadImages() {
+      const images = FILES.filter(Boolean).map(toImageObject);
 
-window.addEventListener('scroll', () => {
-  const img = document.getElementById('heroImage');
-  if (img) {
-    img.style.transform = `translateY(${window.scrollY * 0.4}px)`;
-  }
-});
+      images.sort((a, b) => {
+        if (a.name.toLowerCase() === FEATURED_IMAGE.toLowerCase()) return -1;
+        if (b.name.toLowerCase() === FEATURED_IMAGE.toLowerCase()) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
-load();
+      setHero(images[0] || null);
+      gallery.innerHTML = '';
 
-</script>
+      if (!images.length) {
+        statusBox.textContent = 'No images found.';
+        return;
+      }
 
+      const gifCount = images.filter(image => image.name.toLowerCase().endsWith('.gif')).length;
+      statusBox.textContent = `Loaded ${images.length} image file${images.length === 1 ? '' : 's'}, including ${gifCount} GIF${gifCount === 1 ? '' : 's'}.`;
+
+      const fragment = document.createDocumentFragment();
+      images.forEach(image => {
+        fragment.appendChild(createCard(image));
+      });
+      gallery.appendChild(fragment);
+    }
+
+    loadImages();
+  </script>
 </body>
 </html>
