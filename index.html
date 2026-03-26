@@ -177,6 +177,33 @@
       padding: 10px 16px;
       cursor: pointer;
     }
+    .download-btn {
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight:
+    .download-btn {
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
     .modal-body {
       max-height: calc(95vh - 74px);
       overflow: auto;
@@ -203,13 +230,13 @@
   </main>
 
   <div id="modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <p id="modalTitle" class="modal-title"></p>
+    <div class="modal-conte        <p id="modalTitle" class="modal-title"></p>
           <p id="modalPath" class="modal-path"></p>
         </div>
-        <button id="closeBtn" class="close-btn">Close</button>
+        <div class="modal-actions">
+          <a id="downloadBtn" class="download-btn" href="#" download>Download</a>
+          <button id="closeBtn" class="close-btn">Close</button>
+        </div>
       </div>
       <div class="modal-body">
         <img id="modalImage" src="" alt="" />
@@ -233,10 +260,10 @@
     const statusBox = document.getElementById('status');
     const gallery = document.getElementById('gallery');
     const modal = document.getElementById('modal');
-    const modalImage = document.getElementById('modalImage');
-    const modalTitle = document.getElementById('modalTitle');
+    const modalImage = document.getElementById('modalImage');lTitle');
     const modalPath = document.getElementById('modalPath');
     const closeBtn = document.getElementById('closeBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
     const heroText = document.getElementById('heroText');
 
     function isImageFile(name = '') {
@@ -295,24 +322,14 @@
 
     function createCard(image) {
       const card = document.createElement('div');
-      card.className = 'image-card';
-      const isGif = image.name.toLowerCase().endsWith('.gif');
-      card.innerHTML = `
-        <img src="${image.url}" alt="${image.name}" loading="lazy">
+      card.className = 'image-cal}" alt="${image.name}" loading="lazy">
         <div class="card-overlay">
           <p class="card-title">${image.name}</p>
-          <p class="card-subtitle">${isGif ? 'GIF found • click to view' : 'Click to view'}</p>
-        </div>
-      `;
-      card.addEventListener('click', () => openModal(image));
-      return card;
-    }
-
-    function openModal(image) {
-      modalImage.src = image.url;
-      modalImage.alt = image.name;
-      modalTitle.textContent = image.name;
+          <p class="card-subtitle">${isGif ? 'GIF found •image.name;
       modalPath.textContent = image.path;
+      downloadBtn.href = image.url;
+      downloadBtn.setAttribute('download', image.name);
+      downloadBtn.setAttribute('aria-label', `Download ${image.name}`);
       modal.classList.add('open');
     }
 
