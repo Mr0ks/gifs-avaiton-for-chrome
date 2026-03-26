@@ -1,0 +1,188 @@
+export default function GitHubImageGallerySite() {
+  const { useEffect, useMemo, useState } = React;
+
+  const CONFIG = {
+    owner: "YOUR_GITHUB_USERNAME",
+    repo: "YOUR_REPOSITORY_NAME",
+    branch: "main",
+    path: "",
+    featuredImage: "dubai.png",
+    title: "Save these gifs",
+  };
+
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".avif"];
+
+  const isImageFile = (name = "") => {
+    const lower = name.toLowerCase();
+    return imageExtensions.some((ext) => lower.endsWith(ext));
+  };
+
+  const getRawUrl = (filePath) => {
+    return `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
+  };
+
+  const getApiUrl = (path = "") => {
+    const cleanPath = path ? `/${path}` : "";
+    return `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents${cleanPath}?ref=${CONFIG.branch}`;
+  };
+
+  const fetchRepoImages = async (path = "") => {
+    const res = await fetch(getApiUrl(path));
+    if (!res.ok) {
+      throw new Error("Could not read this GitHub repo. Check the repo name, username, branch, and whether the repo is public.");
+    }
+
+    const items = await res.json();
+    const list = Array.isArray(items) ? items : [items];
+    let found = [];
+
+    for (const item of list) {
+      if (item.type === "file" && isImageFile(item.name)) {
+        found.push({
+          name: item.name,
+          path: item.path,
+          url: getRawUrl(item.path),
+        });
+      }
+
+      if (item.type === "dir") {
+        const nested = await fetchRepoImages(item.path);
+        found = found.concat(nested);
+      }
+    }
+
+    return found;
+  };
+
+  useEffect(() => {
+    let alive = true;
+
+    const loadImages = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const found = await fetchRepoImages(CONFIG.path);
+
+        const sorted = found.sort((a, b) => {
+          if (a.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) return -1;
+          if (b.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        if (alive) {
+          setImages(sorted);
+          setSelectedImage(sorted[0] || null);
+        }
+      } catch (err) {
+        if (alive) setError(err.message || "Something went wrong.");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    };
+
+    loadImages();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const heroImage = useMemo(() => {
+    return images.find((img) => img.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) || images[0] || null;
+  }, [images]);
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <section className="relative h-screen w-full overflow-hidden">
+        {heroImage ? (
+          <img
+            src={heroImage.url}
+            alt={heroImage.name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-lg text-white/70">
+            {loading ? "Loading images..." : "No images found in this repo."}
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black via-black/70 to-transparent" />
+
+        <div className="absolute inset-x-0 bottom-0 z-10 p-6 md:p-10">
+          <p className="text-2xl font-semibold tracking-wide md:text-4xl">{CONFIG.title}</p>
+        </div>
+      </section>
+
+      <main className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10">
+        {error && (
+          <div className="mb-6 rounded-3xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && images.length > 0 && (
+          <div className="mb-8 rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-white/70 backdrop-blur">
+            Found {images.length} image file{images.length === 1 ? "" : "s"} in this GitHub repo.
+          </div>
+        )}
+
+        <div className="space-y-8">
+          {images.map((image) => (
+            <button
+              key={image.path}
+              onClick={() => setSelectedImage(image)}
+              className="group block w-full overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 text-left shadow-2xl transition hover:scale-[1.01] hover:border-white/20"
+            >
+              <div className="relative">
+                <img
+                  src={image.url}
+                  alt={image.name}
+                  className="w-full object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/90 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 md:p-5">
+                  <div>
+                    <p className="text-lg font-semibold md:text-xl">{image.name}</p>
+                    <p className="text-xs text-white/70 md:text-sm">Click to view</p>
+                  </div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </main>
+
+      {selectedImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setSelectedImage(null)}>
+          <div className="relative max-h-[95vh] w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-950" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 md:px-6">
+              <div>
+                <p className="text-base font-semibold md:text-lg">{selectedImage.name}</p>
+                <p className="text-xs text-white/60 md:text-sm">{selectedImage.path}</p>
+              </div>
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="rounded-full border border-white/15 px-4 py-2 text-sm transition hover:bg-white/10"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[calc(95vh-72px)] overflow-auto bg-black">
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.name}
+                className="mx-auto block w-full"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
