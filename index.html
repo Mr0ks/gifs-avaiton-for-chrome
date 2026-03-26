@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aviation Gifs</title>
+  <link rel="icon" type="image/png" href="icon.png" />
   <style>
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -14,7 +14,6 @@
       background: #000;
       color: #fff;
     }
-
     .hero {
       position: relative;
       height: 100vh;
@@ -22,13 +21,11 @@
       overflow: hidden;
       background: #000;
     }
-
     #heroContent {
       position: absolute;
       inset: 0;
       overflow: hidden;
     }
-
     .hero img {
       position: absolute;
       top: 0;
@@ -40,7 +37,6 @@
       transform: translateY(0px);
       will-change: transform;
     }
-
     .hero-placeholder {
       width: 100%;
       height: 100%;
@@ -50,7 +46,6 @@
       color: rgba(255,255,255,0.75);
       font-size: 20px;
     }
-
     .hero-gradient {
       position: absolute;
       left: 0;
@@ -61,7 +56,6 @@
       pointer-events: none;
       z-index: 2;
     }
-
     .hero-text {
       position: fixed;
       top: 22px;
@@ -74,20 +68,17 @@
       width: 100%;
       max-width: 900px;
     }
-
     .hero-text h1 {
       margin: 0;
       font-size: clamp(28px, 5vw, 56px);
       font-weight: 700;
       text-shadow: 0 4px 18px rgba(0,0,0,0.45);
     }
-
     .container {
       max-width: 1100px;
       margin: 0 auto;
       padding: 28px 16px 60px;
     }
-
     .status {
       margin-bottom: 24px;
       padding: 14px 18px;
@@ -97,19 +88,16 @@
       color: rgba(255,255,255,0.8);
       font-size: 14px;
     }
-
     .error {
       background: rgba(255, 80, 80, 0.12);
       border-color: rgba(255, 120, 120, 0.28);
       color: #ffd2d2;
     }
-
     .gallery {
       display: flex;
       flex-direction: column;
       gap: 28px;
     }
-
     .image-card {
       position: relative;
       display: block;
@@ -121,18 +109,15 @@
       cursor: pointer;
       transition: transform 0.2s ease, border-color 0.2s ease;
     }
-
     .image-card:hover {
       transform: scale(1.01);
       border-color: rgba(255,255,255,0.25);
     }
-
     .image-card img {
       width: 100%;
       display: block;
       background: #111;
     }
-
     .card-overlay {
       position: absolute;
       left: 0;
@@ -141,19 +126,16 @@
       padding: 18px;
       background: linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0));
     }
-
     .card-title {
       font-size: 20px;
       font-weight: 700;
       margin: 0 0 6px;
     }
-
     .card-subtitle {
       font-size: 13px;
       color: rgba(255,255,255,0.75);
       margin: 0;
     }
-
     .modal {
       position: fixed;
       inset: 0;
@@ -164,11 +146,9 @@
       padding: 16px;
       z-index: 999;
     }
-
     .modal.open {
       display: flex;
     }
-
     .modal-content {
       width: 100%;
       max-width: 1200px;
@@ -178,7 +158,6 @@
       background: #0a0a0a;
       border: 1px solid rgba(255,255,255,0.12);
     }
-
     .modal-header {
       display: flex;
       align-items: center;
@@ -187,27 +166,23 @@
       padding: 14px 18px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-
     .modal-title {
       margin: 0;
       font-size: 18px;
       font-weight: 700;
     }
-
     .modal-path {
       margin: 4px 0 0;
       font-size: 12px;
       color: rgba(255,255,255,0.65);
       word-break: break-all;
     }
-
     .modal-actions {
       display: flex;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
     }
-
     .close-btn {
       background: transparent;
       color: white;
@@ -216,7 +191,6 @@
       padding: 10px 16px;
       cursor: pointer;
     }
-
     .download-btn {
       background: white;
       color: black;
@@ -230,13 +204,11 @@
       align-items: center;
       justify-content: center;
     }
-
     .modal-body {
       max-height: calc(95vh - 74px);
       overflow: auto;
       background: #000;
     }
-
     .modal-body img {
       width: 100%;
       display: block;
@@ -253,7 +225,7 @@
   </section>
 
   <main class="container">
-    <div id="status" class="status">Loading images from your GitHub repo...</div>
+    <div id="status" class="status">Loading images...</div>
     <div id="gallery" class="gallery"></div>
   </main>
 
@@ -276,14 +248,15 @@
   </div>
 
   <script>
-    const CONFIG = {
-      owner: 'Mr0ks',
-      repo: 'gifs-avaiton-for-chrome',
-      branch: 'main',
-      featuredImage: 'dubai.png'
-    };
+    const FILES = [
+      'dubai.png'
+      // add more here, for example:
+      // 'plane1.gif',
+      // 'plane2.gif',
+      // 'folder/example.gif'
+    ];
 
-    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg', '.avif'];
+    const FEATURED_IMAGE = 'dubai.png';
 
     const heroContent = document.getElementById('heroContent');
     const statusBox = document.getElementById('status');
@@ -296,52 +269,24 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const heroText = document.getElementById('heroText');
 
-    function isImageFile(name) {
-      const lower = String(name || '').toLowerCase();
-      return imageExtensions.some(ext => lower.endsWith(ext));
-    }
-
-    function getRawUrl(filePath) {
-      return `https://cdn.jsdelivr.net/gh/${CONFIG.owner}/${CONFIG.repo}@${CONFIG.branch}/${filePath}`;
-    }/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
-    }
-
-    function getTreeUrl() {
-      return `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/git/trees/${CONFIG.branch}?recursive=1`;
-    }
-
-    async function fetchRepoImages() {
-      const response = await fetch(getTreeUrl(), {
-        headers: {
-          'Accept': 'application/vnd.github+json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Could not load repo files. Make sure GitHub Pages is using the right repo and try again.');
-      }
-
-      const data = await response.json();
-      const tree = Array.isArray(data.tree) ? data.tree : [];
-
-      return tree
-        .filter(item => item.type === 'blob' && isImageFile(item.path))
-        .map(item => ({
-          name: item.path.split('/').pop(),
-          path: item.path,
-          url: getRawUrl(item.path)
-        }));
+    function toImageObject(path) {
+      const cleanPath = String(path || '').trim();
+      return {
+        name: cleanPath.split('/').pop(),
+        path: cleanPath,
+        url: encodeURI(cleanPath)
+      };
     }
 
     function setHero(image) {
       if (!image) {
         heroContent.className = 'hero-placeholder';
-        heroContent.textContent = 'No images found in this repo.';
+        heroContent.textContent = 'No images found.';
         return;
       }
 
       heroContent.className = '';
-      heroContent.innerHTML = `<img id="heroImage" src="${image.url}" alt="${image.name}" loading="eager" decoding="async" referrerpolicy="no-referrer">`;
+      heroContent.innerHTML = `<img id="heroImage" src="${image.url}" alt="${image.name}" loading="eager">`;
     }
 
     function createCard(image) {
@@ -349,7 +294,7 @@
       const isGif = image.name.toLowerCase().endsWith('.gif');
       card.className = 'image-card';
       card.innerHTML = `
-        <img src="${image.url}" alt="${image.name}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+        <img src="${image.url}" alt="${image.name}" loading="lazy">
         <div class="card-overlay">
           <p class="card-title">${image.name}</p>
           <p class="card-subtitle">${isGif ? 'GIF found • click to view or download' : 'Click to view or download'}</p>
@@ -391,41 +336,33 @@
       heroText.style.opacity = `${Math.max(1 - scrollY * 0.0012, 0.5)}`;
     });
 
-    async function loadImages() {
-      try {
-        statusBox.className = 'status';
-        statusBox.textContent = 'Loading images from your GitHub repo...';
+    function loadImages() {
+      const images = FILES.filter(Boolean).map(toImageObject);
 
-        const images = await fetchRepoImages();
+      images.sort((a, b) => {
+        if (a.name.toLowerCase() === FEATURED_IMAGE.toLowerCase()) return -1;
+        if (b.name.toLowerCase() === FEATURED_IMAGE.toLowerCase()) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
-        images.sort((a, b) => {
-          if (a.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) return -1;
-          if (b.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) return 1;
-          return a.name.localeCompare(b.name);
-        });
+      setHero(images[0] || null);
+      gallery.innerHTML = '';
 
-        setHero(images[0] || null);
-        gallery.innerHTML = '';
-
-        if (!images.length) {
-          statusBox.textContent = 'No image files were found in this repo.';
-          return;
-        }
-
-        const gifCount = images.filter(image => image.name.toLowerCase().endsWith('.gif')).length;
-        statusBox.textContent = `Found ${images.length} image file${images.length === 1 ? '' : 's'}, including ${gifCount} GIF${gifCount === 1 ? '' : 's'}.`;
-
-        const fragment = document.createDocumentFragment();
-        images.forEach(image => {
-          fragment.appendChild(createCard(image));
-        });
-        gallery.appendChild(fragment);
-      } catch (error) {
-        console.error(error);
+      if (!images.length) {
         statusBox.className = 'status error';
-        statusBox.textContent = error.message || 'Something went wrong.';
-        setHero(null);
+        statusBox.textContent = 'Add your image file names into the FILES list in index.html.';
+        return;
       }
+
+      const gifCount = images.filter(image => image.name.toLowerCase().endsWith('.gif')).length;
+      statusBox.className = 'status';
+      statusBox.textContent = `Loaded ${images.length} image file${images.length === 1 ? '' : 's'}, including ${gifCount} GIF${gifCount === 1 ? '' : 's'}.`;
+
+      const fragment = document.createDocumentFragment();
+      images.forEach(image => {
+        fragment.appendChild(createCard(image));
+      });
+      gallery.appendChild(fragment);
     }
 
     loadImages();
