@@ -44,17 +44,23 @@
       background: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.7), rgba(0,0,0,0));
     }
     .hero-text {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 2;
-      padding: 24px;
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(0px);
+      z-index: 20;
+      text-align: center;
+      padding: 0 16px;
+      pointer-events: none;
+      transition: transform 0.08s linear;
+      width: 100%;
+      max-width: 900px;
     }
     .hero-text h1 {
       margin: 0;
       font-size: clamp(28px, 5vw, 56px);
       font-weight: 700;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.45);
     }
     .container {
       max-width: 1100px;
@@ -181,7 +187,7 @@
   <section class="hero">
     <div id="heroContent" class="hero-placeholder">Loading images...</div>
     <div class="hero-gradient"></div>
-    <div class="hero-text">
+    <div class="hero-text" id="heroText">
       <h1>Save these gifs</h1>
     </div>
   </section>
@@ -226,6 +232,7 @@
     const modalTitle = document.getElementById('modalTitle');
     const modalPath = document.getElementById('modalPath');
     const closeBtn = document.getElementById('closeBtn');
+    const heroText = document.getElementById('heroText');
 
     function isImageFile(name = '') {
       const lower = name.toLowerCase();
@@ -284,11 +291,12 @@
     function createCard(image) {
       const card = document.createElement('div');
       card.className = 'image-card';
+      const isGif = image.name.toLowerCase().endsWith('.gif');
       card.innerHTML = `
-        <img src="${image.url}" alt="${image.name}">
+        <img src="${image.url}" alt="${image.name}" loading="lazy">
         <div class="card-overlay">
           <p class="card-title">${image.name}</p>
-          <p class="card-subtitle">Click to view</p>
+          <p class="card-subtitle">${isGif ? 'GIF found • click to view' : 'Click to view'}</p>
         </div>
       `;
       card.addEventListener('click', () => openModal(image));
@@ -308,6 +316,14 @@
     }
 
     closeBtn.addEventListener('click', closeModal);
+
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const moveDown = Math.min(scrollY * 0.18, 90);
+      const scale = Math.max(1 - scrollY * 0.00035, 0.88);
+      heroText.style.transform = `translateX(-50%) translateY(${moveDown}px) scale(${scale})`;
+      heroText.style.opacity = `${Math.max(1 - scrollY * 0.0012, 0.5)}`;
+    });
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeModal();
     });
@@ -333,7 +349,8 @@
           return;
         }
 
-        statusBox.textContent = `Found ${images.length} image file${images.length === 1 ? '' : 's'} in this GitHub repo.`;
+        const gifCount = images.filter(image => image.name.toLowerCase().endsWith('.gif')).length;
+        statusBox.textContent = `Found ${images.length} image file${images.length === 1 ? '' : 's'} in this GitHub repo, including ${gifCount} GIF${gifCount === 1 ? '' : 's'}.`;
 
         images.forEach(image => {
           gallery.appendChild(createCard(image));
