@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aviation gifs</title>
+  <title>Aviation Gifs</title>
   <style>
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -301,7 +302,8 @@
     }
 
     function getRawUrl(filePath) {
-      return `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
+      return `https://cdn.jsdelivr.net/gh/${CONFIG.owner}/${CONFIG.repo}@${CONFIG.branch}/${filePath}`;
+    }/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
     }
 
     function getTreeUrl() {
@@ -339,7 +341,7 @@
       }
 
       heroContent.className = '';
-      heroContent.innerHTML = `<img id="heroImage" src="${image.url}" alt="${image.name}" loading="eager">`;
+      heroContent.innerHTML = `<img id="heroImage" src="${image.url}" alt="${image.name}" loading="eager" decoding="async" referrerpolicy="no-referrer">`;
     }
 
     function createCard(image) {
@@ -347,7 +349,7 @@
       const isGif = image.name.toLowerCase().endsWith('.gif');
       card.className = 'image-card';
       card.innerHTML = `
-        <img src="${image.url}" alt="${image.name}" loading="lazy">
+        <img src="${image.url}" alt="${image.name}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
         <div class="card-overlay">
           <p class="card-title">${image.name}</p>
           <p class="card-subtitle">${isGif ? 'GIF found • click to view or download' : 'Click to view or download'}</p>
@@ -413,9 +415,11 @@
         const gifCount = images.filter(image => image.name.toLowerCase().endsWith('.gif')).length;
         statusBox.textContent = `Found ${images.length} image file${images.length === 1 ? '' : 's'}, including ${gifCount} GIF${gifCount === 1 ? '' : 's'}.`;
 
+        const fragment = document.createDocumentFragment();
         images.forEach(image => {
-          gallery.appendChild(createCard(image));
+          fragment.appendChild(createCard(image));
         });
+        gallery.appendChild(fragment);
       } catch (error) {
         console.error(error);
         statusBox.className = 'status error';
