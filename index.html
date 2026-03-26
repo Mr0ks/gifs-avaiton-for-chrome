@@ -1,188 +1,351 @@
-export default function GitHubImageGallerySite() {
-  const { useEffect, useMemo, useState } = React;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Save these gifs</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #000;
+      color: #fff;
+    }
+    .hero {
+      position: relative;
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+    .hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .hero-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.75);
+      font-size: 20px;
+    }
+    .hero-gradient {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 220px;
+      background: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.7), rgba(0,0,0,0));
+    }
+    .hero-text {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      padding: 24px;
+    }
+    .hero-text h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 56px);
+      font-weight: 700;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+    .status {
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+    }
+    .error {
+      background: rgba(255, 80, 80, 0.12);
+      border-color: rgba(255, 120, 120, 0.28);
+      color: #ffd2d2;
+    }
+    .gallery {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .image-card {
+      position: relative;
+      display: block;
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 28px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .image-card:hover {
+      transform: scale(1.01);
+      border-color: rgba(255,255,255,0.25);
+    }
+    .image-card img {
+      width: 100%;
+      display: block;
+    }
+    .card-overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 18px;
+      background: linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0));
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+    .card-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      margin: 0;
+    }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+    }
+    .modal.open {
+      display: flex;
+    }
+    .modal-content {
+      width: 100%;
+      max-width: 1200px;
+      max-height: 95vh;
+      overflow: hidden;
+      border-radius: 28px;
+      background: #0a0a0a;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .modal-path {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: rgba(255,255,255,0.65);
+      word-break: break-all;
+    }
+    .close-btn {
+      background: transparent;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    .modal-body {
+      max-height: calc(95vh - 74px);
+      overflow: auto;
+      background: #000;
+    }
+    .modal-body img {
+      width: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div id="heroContent" class="hero-placeholder">Loading images...</div>
+    <div class="hero-gradient"></div>
+    <div class="hero-text">
+      <h1>Save these gifs</h1>
+    </div>
+  </section>
 
-  const CONFIG = {
-    owner: "YOUR_GITHUB_USERNAME",
-    repo: "YOUR_REPOSITORY_NAME",
-    branch: "main",
-    path: "",
-    featuredImage: "dubai.png",
-    title: "Save these gifs",
-  };
+  <main class="container">
+    <div id="status" class="status">Checking your GitHub repo for image files...</div>
+    <div id="gallery" class="gallery"></div>
+  </main>
 
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [selectedImage, setSelectedImage] = useState(null);
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <p id="modalTitle" class="modal-title"></p>
+          <p id="modalPath" class="modal-path"></p>
+        </div>
+        <button id="closeBtn" class="close-btn">Close</button>
+      </div>
+      <div class="modal-body">
+        <img id="modalImage" src="" alt="" />
+      </div>
+    </div>
+  </div>
 
-  const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".avif"];
+  <script>
+    const CONFIG = {
+      owner: 'Mr0ks',
+      repo: 'gifs-avaiton-for-chrome',
+      branch: 'main',
+      path: '',
+      featuredImage: 'dubai.png',
+      title: 'Save these gifs'
+    };
 
-  const isImageFile = (name = "") => {
-    const lower = name.toLowerCase();
-    return imageExtensions.some((ext) => lower.endsWith(ext));
-  };
+    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg', '.avif'];
 
-  const getRawUrl = (filePath) => {
-    return `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
-  };
+    const heroContent = document.getElementById('heroContent');
+    const statusBox = document.getElementById('status');
+    const gallery = document.getElementById('gallery');
+    const modal = document.getElementById('modal');
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalPath = document.getElementById('modalPath');
+    const closeBtn = document.getElementById('closeBtn');
 
-  const getApiUrl = (path = "") => {
-    const cleanPath = path ? `/${path}` : "";
-    return `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents${cleanPath}?ref=${CONFIG.branch}`;
-  };
-
-  const fetchRepoImages = async (path = "") => {
-    const res = await fetch(getApiUrl(path));
-    if (!res.ok) {
-      throw new Error("Could not read this GitHub repo. Check the repo name, username, branch, and whether the repo is public.");
+    function isImageFile(name = '') {
+      const lower = name.toLowerCase();
+      return imageExtensions.some(ext => lower.endsWith(ext));
     }
 
-    const items = await res.json();
-    const list = Array.isArray(items) ? items : [items];
-    let found = [];
-
-    for (const item of list) {
-      if (item.type === "file" && isImageFile(item.name)) {
-        found.push({
-          name: item.name,
-          path: item.path,
-          url: getRawUrl(item.path),
-        });
-      }
-
-      if (item.type === "dir") {
-        const nested = await fetchRepoImages(item.path);
-        found = found.concat(nested);
-      }
+    function getRawUrl(filePath) {
+      return `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${filePath}`;
     }
 
-    return found;
-  };
+    function getApiUrl(path = '') {
+      const cleanPath = path ? `/${path}` : '';
+      return `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents${cleanPath}?ref=${CONFIG.branch}`;
+    }
 
-  useEffect(() => {
-    let alive = true;
+    async function fetchRepoImages(path = '') {
+      const response = await fetch(getApiUrl(path));
 
-    const loadImages = async () => {
+      if (!response.ok) {
+        throw new Error('Could not read this GitHub repo. Check username, repo, branch, and make sure the repo is public.');
+      }
+
+      const items = await response.json();
+      const list = Array.isArray(items) ? items : [items];
+      let found = [];
+
+      for (const item of list) {
+        if (item.type === 'file' && isImageFile(item.name)) {
+          found.push({
+            name: item.name,
+            path: item.path,
+            url: getRawUrl(item.path)
+          });
+        }
+
+        if (item.type === 'dir') {
+          const nested = await fetchRepoImages(item.path);
+          found = found.concat(nested);
+        }
+      }
+
+      return found;
+    }
+
+    function setHero(image) {
+      if (!image) {
+        heroContent.className = 'hero-placeholder';
+        heroContent.textContent = 'No images found in this repo.';
+        return;
+      }
+
+      heroContent.className = '';
+      heroContent.innerHTML = `<img src="${image.url}" alt="${image.name}">`;
+    }
+
+    function createCard(image) {
+      const card = document.createElement('div');
+      card.className = 'image-card';
+      card.innerHTML = `
+        <img src="${image.url}" alt="${image.name}">
+        <div class="card-overlay">
+          <p class="card-title">${image.name}</p>
+          <p class="card-subtitle">Click to view</p>
+        </div>
+      `;
+      card.addEventListener('click', () => openModal(image));
+      return card;
+    }
+
+    function openModal(image) {
+      modalImage.src = image.url;
+      modalImage.alt = image.name;
+      modalTitle.textContent = image.name;
+      modalPath.textContent = image.path;
+      modal.classList.add('open');
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    async function loadImages() {
       try {
-        setLoading(true);
-        setError("");
-        const found = await fetchRepoImages(CONFIG.path);
+        statusBox.className = 'status';
+        statusBox.textContent = 'Checking your GitHub repo for image files...';
 
-        const sorted = found.sort((a, b) => {
+        const images = await fetchRepoImages(CONFIG.path);
+
+        images.sort((a, b) => {
           if (a.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) return -1;
           if (b.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) return 1;
           return a.name.localeCompare(b.name);
         });
 
-        if (alive) {
-          setImages(sorted);
-          setSelectedImage(sorted[0] || null);
+        setHero(images[0] || null);
+        gallery.innerHTML = '';
+
+        if (!images.length) {
+          statusBox.textContent = 'No image files were found in this repo.';
+          return;
         }
-      } catch (err) {
-        if (alive) setError(err.message || "Something went wrong.");
-      } finally {
-        if (alive) setLoading(false);
+
+        statusBox.textContent = `Found ${images.length} image file${images.length === 1 ? '' : 's'} in this GitHub repo.`;
+
+        images.forEach(image => {
+          gallery.appendChild(createCard(image));
+        });
+      } catch (error) {
+        statusBox.className = 'status error';
+        statusBox.textContent = error.message || 'Something went wrong.';
+        setHero(null);
       }
-    };
+    }
 
     loadImages();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const heroImage = useMemo(() => {
-    return images.find((img) => img.name.toLowerCase() === CONFIG.featuredImage.toLowerCase()) || images[0] || null;
-  }, [images]);
-
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <section className="relative h-screen w-full overflow-hidden">
-        {heroImage ? (
-          <img
-            src={heroImage.url}
-            alt={heroImage.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-lg text-white/70">
-            {loading ? "Loading images..." : "No images found in this repo."}
-          </div>
-        )}
-
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black via-black/70 to-transparent" />
-
-        <div className="absolute inset-x-0 bottom-0 z-10 p-6 md:p-10">
-          <p className="text-2xl font-semibold tracking-wide md:text-4xl">{CONFIG.title}</p>
-        </div>
-      </section>
-
-      <main className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10">
-        {error && (
-          <div className="mb-6 rounded-3xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && images.length > 0 && (
-          <div className="mb-8 rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-white/70 backdrop-blur">
-            Found {images.length} image file{images.length === 1 ? "" : "s"} in this GitHub repo.
-          </div>
-        )}
-
-        <div className="space-y-8">
-          {images.map((image) => (
-            <button
-              key={image.path}
-              onClick={() => setSelectedImage(image)}
-              className="group block w-full overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 text-left shadow-2xl transition hover:scale-[1.01] hover:border-white/20"
-            >
-              <div className="relative">
-                <img
-                  src={image.url}
-                  alt={image.name}
-                  className="w-full object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/90 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 md:p-5">
-                  <div>
-                    <p className="text-lg font-semibold md:text-xl">{image.name}</p>
-                    <p className="text-xs text-white/70 md:text-sm">Click to view</p>
-                  </div>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </main>
-
-      {selectedImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setSelectedImage(null)}>
-          <div className="relative max-h-[95vh] w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-950" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 md:px-6">
-              <div>
-                <p className="text-base font-semibold md:text-lg">{selectedImage.name}</p>
-                <p className="text-xs text-white/60 md:text-sm">{selectedImage.path}</p>
-              </div>
-              <button
-                onClick={() => setSelectedImage(null)}
-                className="rounded-full border border-white/15 px-4 py-2 text-sm transition hover:bg-white/10"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="max-h-[calc(95vh-72px)] overflow-auto bg-black">
-              <img
-                src={selectedImage.url}
-                alt={selectedImage.name}
-                className="mx-auto block w-full"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+  </script>
+</body>
+</html>
